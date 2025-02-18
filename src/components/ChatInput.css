@@ -109,6 +109,8 @@
   border-radius: 4px;
   transition: all 0.2s ease;
   z-index: 1;
+  width: 28px;
+  height: 28px;
 }
 
 .submit-button:hover {
@@ -124,6 +126,19 @@
 .submit-button svg {
   width: 20px;
   height: 20px;
+}
+
+.submit-button.loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
 }
 
 .download-button {

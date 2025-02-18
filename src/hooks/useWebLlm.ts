@@ -27,7 +27,6 @@ export const useWebLlm = (): UseWebLlmReturn => {
   const [text, setText] = useState<string | null>(null);
  
   useEffect(() => {
-
     const initProgressCallback = (obj: InitProgressCallback) => {
       console.log(obj);
       setText(obj.text);
@@ -40,7 +39,6 @@ export const useWebLlm = (): UseWebLlmReturn => {
     }).catch(error => {
       console.error('Error initializing WebLLM:', error);
     });
-
   }, []);
 
   const sendMessage = useCallback(async (message: string) => {
@@ -57,8 +55,14 @@ export const useWebLlm = (): UseWebLlmReturn => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Use a microtask to allow React to process the state update
-    await Promise.resolve();
+    // Create a placeholder message for the AI response
+    const aiMessageId = Date.now() + 1;
+    const aiMessage: Message = {
+      id: aiMessageId,
+      text: '',
+      isUser: false,
+    };
+    setMessages(prev => [...prev, aiMessage]);
 
     try {
       const chatMessages = [
@@ -70,19 +74,43 @@ export const useWebLlm = (): UseWebLlmReturn => {
         { role: "user" as const, content: message }
       ];
 
-      const reply = await engine.chat.completions.create({
+      // Enable streaming
+      const chunks = await engine.chat.completions.create({
         messages: chatMessages,
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 1000,
+        stream: true,
+        stream_options: { include_usage: true }
       });
 
-      const content = reply.choices[0]?.message?.content || 'No response generated.';
-      const aiMessage: Message = {
-        id: Date.now(),
-        text: content,
-        isUser: false,
-      };
-      setMessages(prev => [...prev, aiMessage]);
+      let streamedText = '';
+      for await (const chunk of chunks) {
+        const content = chunk.choices[0]?.delta.content || '';
+        streamedText += content;
+        
+        // Update the AI message with the accumulated text
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, text: streamedText }
+              : msg
+          )
+        );
+
+        if (chunk.usage) {
+          console.log('Usage stats:', chunk.usage);
+        }
+      }
+
+      // Get the final message to ensure we have the complete response
+      const fullReply = await engine.getMessage();
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === aiMessageId 
+            ? { ...msg, text: fullReply }
+            : msg
+        )
+      );
     } catch (error) {
       console.error('Error generating WebLLM response:', error);
       const errorMessage: Message = {
@@ -90,7 +118,9 @@ export const useWebLlm = (): UseWebLlmReturn => {
         text: error instanceof Error ? error.message : 'An error occurred while generating the response.',
         isUser: false,
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId ? errorMessage : msg
+      ));
     } finally {
       setIsLoading(false);
     }

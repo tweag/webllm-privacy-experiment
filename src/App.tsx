@@ -12,7 +12,7 @@ function App() {
   return (
     <div className="app">
       {!webLlm.ready && (<ModelDownloadProgress text={webLlm.text}/>)}
-      <ChatMessages messages={webLlm.messages} isLoading={webLlm.isLoading} />
+      <ChatMessages messages={webLlm.messages} />
       <ChatInput 
         onSubmit={webLlm.sendMessage} 
         isLoading={webLlm.isLoading} 
