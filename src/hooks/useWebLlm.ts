@@ -1,79 +1,47 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
 import { Message } from '../types/chat';
+
+// const MODEL_NAME = "Hermes-3-Llama-3.1-8B-q4f32_1-MLC"; 
+const MODEL_NAME = "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC"; 
 
 interface UseWebLlmReturn {
   messages: Message[];
   isLoading: boolean;
   sendMessage: (message: string) => Promise<void>;
-  isInitializing: boolean;
-  initProgress: number;
-  downloadedBytes?: number;
-  totalBytes?: number;
-  startDownload: () => void;
-  isDownloaded: boolean;
-  isCheckingCache: boolean;
+  ready: boolean;
+  text: string | null;
+}
+
+interface InitProgressCallback {
+  progress: number;
+  timeElapsed: number;
+  text: string;
 }
 
 export const useWebLlm = (): UseWebLlmReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [engine, setEngine] = useState<MLCEngine | null>(null);
-  const [isInitializing, setIsInitializing] = useState(false);
-  const [initProgress, setInitProgress] = useState(0);
-  const [downloadedBytes, setDownloadedBytes] = useState<number | undefined>(undefined);
-  const [totalBytes, setTotalBytes] = useState<number | undefined>(undefined);
-  const [isDownloaded, setIsDownloaded] = useState(false);
-  const [isCheckingCache, setIsCheckingCache] = useState(true);
-
-  // Check for cached model on mount
+  const [ready, setReady] = useState(false);
+  const [text, setText] = useState<string | null>(null);
+ 
   useEffect(() => {
-    const checkCache = async () => {
-      try {
-        const newEngine = await CreateMLCEngine("Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC", {});
-        setEngine(newEngine);
-        setIsDownloaded(true);
-      } catch (error) {
-        console.log('Model not in cache:', error);
-        setIsDownloaded(false);
-      } finally {
-        setIsCheckingCache(false);
-      }
+
+    const initProgressCallback = (obj: InitProgressCallback) => {
+      console.log(obj);
+      setText(obj.text);
     };
 
-    checkCache();
-  }, []);
-
-  const initEngineRef = useRef(async () => {
-    try {
-      const initProgressCallback = (progress: any) => {
-        console.log("Model loading progress:", progress);
-        setInitProgress(progress.progress || 0);
-        if (progress.downloadedBytes) {
-          setDownloadedBytes(progress.downloadedBytes);
-        }
-        if (progress.totalBytes) {
-          setTotalBytes(progress.totalBytes);
-        }
-      };
-
-      const newEngine = await CreateMLCEngine("Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC", { initProgressCallback });
-      
-      setEngine(newEngine);
-      setIsDownloaded(true);
-    } catch (error) {
+    CreateMLCEngine(MODEL_NAME, { initProgressCallback }).then(engine => {  
+      setEngine(engine);
+      setReady(true);
+      console.log("WebLLM engine initialized");
+    }).catch(error => {
       console.error('Error initializing WebLLM:', error);
-    } finally {
-      setIsInitializing(false);
-    }
-  });
+    });
 
-  const startDownload = useCallback(() => {
-    if (!isInitializing && !engine) {
-      setIsInitializing(true);
-      initEngineRef.current();
-    }
-  }, [isInitializing, engine]);
+  }, []);
 
   const sendMessage = useCallback(async (message: string) => {
     if (!engine) {
@@ -132,12 +100,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
     messages,
     isLoading,
     sendMessage,
-    isInitializing,
-    initProgress,
-    downloadedBytes,
-    totalBytes,
-    startDownload,
-    isDownloaded,
-    isCheckingCache
+    ready,
+    text,
   };
 }; 

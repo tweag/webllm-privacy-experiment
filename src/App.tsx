@@ -9,27 +9,15 @@ const MAX_TOKENS = 500;
 function App() {
   const webLlm = useWebLlm();
 
-  const showModelProgress = !webLlm.isDownloaded || webLlm.isCheckingCache;
-  const inputDisabled = !webLlm.isDownloaded || webLlm.isCheckingCache;
-
   return (
     <div className="app">
-      {showModelProgress && (
-        <ModelDownloadProgress 
-          progress={webLlm.initProgress}
-          downloadedBytes={webLlm.downloadedBytes}
-          totalBytes={webLlm.totalBytes}
-          onDownload={webLlm.startDownload}
-          isInitializing={webLlm.isInitializing}
-          isCheckingCache={webLlm.isCheckingCache}
-        />
-      )}
+      {!webLlm.ready && (<ModelDownloadProgress text={webLlm.text}/>)}
       <ChatMessages messages={webLlm.messages} isLoading={webLlm.isLoading} />
       <ChatInput 
         onSubmit={webLlm.sendMessage} 
         isLoading={webLlm.isLoading} 
         maxTokens={MAX_TOKENS}
-        disabled={inputDisabled}
+        disabled={false}
       />
     </div>
   );
