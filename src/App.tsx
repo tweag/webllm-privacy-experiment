@@ -1,4 +1,4 @@
-import { useWebLlm } from './hooks/useWebLlm';
+import { useChatModel } from './hooks/useChatModel';
 import { ChatMessages } from './components/ChatMessages';
 import { ChatInput } from './components/ChatInput';
 import { ModelDownloadProgress } from './components/ModelDownloadProgress';
@@ -7,17 +7,17 @@ import './components/App.css';
 const MAX_TOKENS = 500;
 
 function App() {
-  const webLlm = useWebLlm();
+  const chatModel = useChatModel();
 
   return (
     <div className="app">
-      {!webLlm.ready && (<ModelDownloadProgress text={webLlm.text}/>)}
-      <ChatMessages messages={webLlm.messages} />
+      {!chatModel.ready && (<ModelDownloadProgress text={chatModel.text}/>)}
+      <ChatMessages messages={chatModel.messages} />
       <ChatInput 
-        onSubmit={webLlm.sendMessage} 
-        isLoading={webLlm.isLoading} 
+        onSubmit={chatModel.sendMessage} 
+        isLoading={chatModel.isLoading} 
         maxTokens={MAX_TOKENS}
-        disabled={false}
+        disabled={!chatModel.ready}
       />
     </div>
   );

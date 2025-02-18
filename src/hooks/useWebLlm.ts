@@ -28,14 +28,12 @@ export const useWebLlm = (): UseWebLlmReturn => {
  
   useEffect(() => {
     const initProgressCallback = (obj: InitProgressCallback) => {
-      console.log(obj);
       setText(obj.text);
     };
 
     CreateMLCEngine(MODEL_NAME, { initProgressCallback }).then(engine => {  
       setEngine(engine);
       setReady(true);
-      console.log("WebLLM engine initialized");
     }).catch(error => {
       console.error('Error initializing WebLLM:', error);
     });
@@ -51,6 +49,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
       id: Date.now(),
       text: message,
       isUser: true,
+      source: 'WebLLM'
     };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
@@ -61,6 +60,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
       id: aiMessageId,
       text: '',
       isUser: false,
+      source: 'WebLLM'
     };
     setMessages(prev => [...prev, aiMessage]);
 
@@ -117,6 +117,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
         id: Date.now(),
         text: error instanceof Error ? error.message : 'An error occurred while generating the response.',
         isUser: false,
+        source: 'WebLLM'
       };
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId ? errorMessage : msg

@@ -48,6 +48,9 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages }) => {
           <div className="message-content">
             {message.text}
           </div>
+          <div className="message-source">
+            {message.isUser ? 'You' : message.source || 'AI'}
+          </div>
         </div>
       ))}
       <div ref={bottomRef} />

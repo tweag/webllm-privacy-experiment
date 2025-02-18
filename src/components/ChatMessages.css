@@ -34,6 +34,7 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   word-break: break-word;
+  position: relative;
 }
 
 .message.user .message-content {
@@ -44,6 +45,21 @@
 .message.ai .message-content {
   background: var(--bg-tertiary);
   position: relative;
+}
+
+.message-source {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.message.user .message-source {
+  text-align: right;
+}
+
+.message.ai .message-source {
+  text-align: left;
 }
 
 .message.ai.typing .message-content::after {

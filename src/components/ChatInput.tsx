@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ChatInput.css';
 
 interface ChatInputProps {
@@ -21,10 +21,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [tokenCount, setTokenCount] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setTokenCount(countTokens(inputValue));
   }, [inputValue]);
+
+  const resetTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight + 2, 200)}px`;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +41,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const prompt = inputValue;
     setInputValue('');
     setTokenCount(0);
+    
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '56px'; // Reset to min-height
+    }
+    
     await onSubmit(prompt);
   };
 
@@ -41,9 +55,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const newTokenCount = countTokens(newValue);
     if (newTokenCount <= maxTokens) {
       setInputValue(newValue);
-      e.target.style.height = 'auto';
-      const newHeight = Math.min(e.target.scrollHeight + 2, 200);
-      e.target.style.height = `${newHeight}px`;
+      resetTextareaHeight();
     }
   };
 
@@ -54,6 +66,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <div className="input-with-button">
             <div className="input-container-with-counter">
               <textarea
+                ref={textareaRef}
                 value={inputValue}
                 onChange={handleInputChange}
                 placeholder="Type your message..."
