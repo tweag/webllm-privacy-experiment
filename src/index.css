@@ -252,18 +252,40 @@ body {
   font-size: 12px;
 }
 
-.token-counter {
+.input-controls {
   position: absolute;
   right: 48px;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.model-select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.model-select:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.token-counter {
   font-size: 12px;
   color: var(--text-secondary);
   background-color: var(--bg-input);
   padding: 4px 8px;
   border-radius: 4px;
   pointer-events: none;
-  z-index: 1;
 }
 
 .token-counter-warning {

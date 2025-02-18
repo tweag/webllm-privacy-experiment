@@ -1,0 +1,144 @@
+.input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+  background: var(--bg-primary);
+}
+
+.input-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.input-with-button {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.input-container-with-counter {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 16px;
+  padding-right: 120px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: none;
+  min-height: 56px;
+  max-height: 200px;
+  line-height: 1.5;
+  font-family: inherit;
+  overflow: hidden;
+}
+
+.chat-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--border-color);
+  background: var(--bg-input);
+}
+
+.input-controls {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.model-select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.model-select:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.token-counter {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background-color: var(--bg-input);
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.token-counter-warning {
+  color: #ff4a4a;
+}
+
+.submit-button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 1;
+}
+
+.submit-button:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+.submit-button:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.submit-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.download-button {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.download-button:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+} 
