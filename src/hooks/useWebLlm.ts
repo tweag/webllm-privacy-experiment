@@ -7,7 +7,6 @@ interface UseWebLlmReturn {
   sendMessage: (
     message: string,
     currentMessages: Message[],
-    aiMessageId: number,
     onUpdate: (text: string) => void
   ) => Promise<void>;
   ready: boolean;
@@ -123,7 +122,6 @@ export const useWebLlm = (): UseWebLlmReturn => {
   const sendMessage = useCallback(async (
     message: string,
     currentMessages: Message[],
-    aiMessageId: number,
     onUpdate: (text: string) => void
   ) => {
     if (!engine) {

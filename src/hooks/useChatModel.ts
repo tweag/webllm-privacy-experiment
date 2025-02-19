@@ -90,7 +90,7 @@ export const useChatModel = (): UseChatModelReturn => {
 
       if (shouldUseOpenAI) {
         // Pass the current messages array to maintain conversation history
-        await openAi.sendMessage(cleanMessage, messages, aiMessageId, (text: string) => {
+        await openAi.sendMessage(cleanMessage, messages, (text: string) => {
           setMessages(prev => 
             prev.map(msg => 
               msg.id === aiMessageId 
@@ -101,7 +101,7 @@ export const useChatModel = (): UseChatModelReturn => {
         });
       } else {
         // Pass the current messages array to maintain conversation history
-        await webLlm.sendMessage(cleanMessage, messages, aiMessageId, (text: string) => {
+        await webLlm.sendMessage(cleanMessage, messages, (text: string) => {
           setMessages(prev => 
             prev.map(msg => 
               msg.id === aiMessageId 

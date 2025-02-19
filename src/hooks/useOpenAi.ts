@@ -6,7 +6,6 @@ interface UseOpenAiReturn {
   sendMessage: (
     message: string,
     currentMessages: Message[],
-    aiMessageId: number,
     onUpdate: (text: string) => void
   ) => Promise<void>;
 }
@@ -24,7 +23,6 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
   const sendMessage = useCallback(async (
     message: string,
     currentMessages: Message[],
-    aiMessageId: number,
     onUpdate: (text: string) => void
   ) => {
     const finalConfig = { ...DEFAULT_CONFIG, ...config };
