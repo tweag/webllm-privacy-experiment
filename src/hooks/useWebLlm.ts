@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
-import { Message } from '../types/chat';
+import { Message, ComplexityAnalysis, COMPLEXITY_ANALYSIS_PROMPT } from '../types/chat';
 
 // const MODEL_NAME = "Hermes-3-Llama-3.1-8B-q4f32_1-MLC"; 
 const MODEL_NAME = "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC"; 
@@ -8,9 +8,15 @@ const MODEL_NAME = "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC";
 interface UseWebLlmReturn {
   messages: Message[];
   isLoading: boolean;
-  sendMessage: (message: string) => Promise<void>;
+  sendMessage: (
+    message: string,
+    currentMessages: Message[],
+    aiMessageId: number,
+    onUpdate: (text: string) => void
+  ) => Promise<void>;
   ready: boolean;
   text: string | null;
+  analyzeComplexity: (prompt: string) => Promise<ComplexityAnalysis>;
 }
 
 interface InitProgressCallback {
@@ -39,38 +45,70 @@ export const useWebLlm = (): UseWebLlmReturn => {
     });
   }, []);
 
-  const sendMessage = useCallback(async (message: string) => {
+  const analyzeComplexity = useCallback(async (prompt: string): Promise<ComplexityAnalysis> => {
     if (!engine) {
-      console.error('WebLLM engine not initialized');
-      return;
+      throw new Error('WebLLM engine not initialized');
     }
 
-    const userMessage: Message = {
-      id: Date.now(),
-      text: message,
-      isUser: true,
-      source: 'WebLLM'
-    };
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
+    try {
+      const analysisPrompt = COMPLEXITY_ANALYSIS_PROMPT + prompt;
+      const response = await engine.chat.completions.create({
+        messages: [
+          { role: "system", content: "You are a prompt complexity analyzer." },
+          { role: "user", content: analysisPrompt }
+        ],
+        temperature: 0.1, // Low temperature for more consistent analysis
+        max_tokens: 200,
+      });
 
-    // Create a placeholder message for the AI response
-    const aiMessageId = Date.now() + 1;
-    const aiMessage: Message = {
-      id: aiMessageId,
-      text: '',
-      isUser: false,
-      source: 'WebLLM'
-    };
-    setMessages(prev => [...prev, aiMessage]);
+      const analysisText = response.choices[0]?.message?.content || '';
+      
+      try {
+        const analysis = JSON.parse(analysisText) as ComplexityAnalysis;
+        return {
+          isComplex: analysis.isComplex,
+          reason: analysis.reason,
+          confidence: analysis.confidence
+        };
+      } catch (parseError) {
+        console.error('Error parsing complexity analysis:', parseError);
+        return {
+          isComplex: true, // Default to OpenAI if we can't parse the analysis
+          reason: 'Failed to analyze complexity',
+          confidence: 1
+        };
+      }
+    } catch (error) {
+      console.error('Error analyzing complexity:', error);
+      return {
+        isComplex: true, // Default to OpenAI if analysis fails
+        reason: 'Error during complexity analysis',
+        confidence: 1
+      };
+    }
+  }, [engine]);
+
+  const sendMessage = useCallback(async (
+    message: string,
+    currentMessages: Message[],
+    aiMessageId: number,
+    onUpdate: (text: string) => void
+  ) => {
+    if (!engine) {
+      throw new Error('WebLLM engine not initialized');
+    }
+
+    setIsLoading(true);
 
     try {
       const chatMessages = [
         { role: "system" as const, content: "You are a helpful AI assistant." },
-        ...messages.map(msg => ({
-          role: msg.isUser ? "user" as const : "assistant" as const,
-          content: msg.text
-        })),
+        ...currentMessages
+          .filter(msg => msg.source !== 'Analyzing') // Filter out analyzing messages
+          .map(msg => ({
+            role: msg.isUser ? "user" as const : "assistant" as const,
+            content: msg.text
+          })),
         { role: "user" as const, content: message }
       ];
 
@@ -87,15 +125,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
       for await (const chunk of chunks) {
         const content = chunk.choices[0]?.delta.content || '';
         streamedText += content;
-        
-        // Update the AI message with the accumulated text
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === aiMessageId 
-              ? { ...msg, text: streamedText }
-              : msg
-          )
-        );
+        onUpdate(streamedText);
 
         if (chunk.usage) {
           console.log('Usage stats:', chunk.usage);
@@ -104,28 +134,14 @@ export const useWebLlm = (): UseWebLlmReturn => {
 
       // Get the final message to ensure we have the complete response
       const fullReply = await engine.getMessage();
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === aiMessageId 
-            ? { ...msg, text: fullReply }
-            : msg
-        )
-      );
+      onUpdate(fullReply);
     } catch (error) {
       console.error('Error generating WebLLM response:', error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: error instanceof Error ? error.message : 'An error occurred while generating the response.',
-        isUser: false,
-        source: 'WebLLM'
-      };
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId ? errorMessage : msg
-      ));
+      throw error;
     } finally {
       setIsLoading(false);
     }
-  }, [engine, messages]);
+  }, [engine]);
 
   return {
     messages,
@@ -133,5 +149,6 @@ export const useWebLlm = (): UseWebLlmReturn => {
     sendMessage,
     ready,
     text,
+    analyzeComplexity
   };
 }; 
