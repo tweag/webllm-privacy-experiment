@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useWebLlm } from './useWebLlm';
 import { useOpenAi } from './useOpenAi';
 import { Message } from '../types/chat';

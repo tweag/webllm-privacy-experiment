@@ -2,11 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
 import { Message, ComplexityAnalysis, COMPLEXITY_ANALYSIS_PROMPT } from '../types/chat';
 
-// const MODEL_NAME = "Hermes-3-Llama-3.1-8B-q4f32_1-MLC"; 
-const MODEL_NAME = "Hermes-2-Pro-Llama-3-8B-q4f16_1-MLC"; 
-
 interface UseWebLlmReturn {
-  messages: Message[];
   isLoading: boolean;
   sendMessage: (
     message: string,
@@ -26,7 +22,6 @@ interface InitProgressCallback {
 }
 
 export const useWebLlm = (): UseWebLlmReturn => {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [engine, setEngine] = useState<MLCEngine | null>(null);
   const [ready, setReady] = useState(false);
@@ -181,7 +176,6 @@ export const useWebLlm = (): UseWebLlmReturn => {
   }, [engine]);
 
   return {
-    messages,
     isLoading,
     sendMessage,
     ready,

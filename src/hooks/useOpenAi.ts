@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { Message, OpenAIConfig } from '../types/chat';
 
 interface UseOpenAiReturn {
-  messages: Message[];
   isLoading: boolean;
   sendMessage: (
     message: string,
@@ -20,10 +19,7 @@ const DEFAULT_CONFIG: OpenAIConfig = {
 };
 
 export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
   const sendMessage = useCallback(async (
     message: string,
@@ -31,6 +27,8 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
     aiMessageId: number,
     onUpdate: (text: string) => void
   ) => {
+    const finalConfig = { ...DEFAULT_CONFIG, ...config };
+    
     if (finalConfig.enabled === false) {
       console.warn('OpenAI hook is disabled');
       return;
@@ -108,10 +106,9 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [finalConfig]);
+  }, [config]);
 
   return {
-    messages,
     isLoading,
     sendMessage
   };

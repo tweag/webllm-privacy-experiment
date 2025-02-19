@@ -30,13 +30,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages }) => {
 
   // Scroll when content changes within the last message (streaming)
   useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (!lastMessage.isUser) {
-        scrollToBottom();
-      }
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && !lastMessage.isUser) {
+      scrollToBottom();
     }
-  }, [messages[messages.length - 1]?.text]);
+  }, [messages]);
 
   return (
     <div className="chat-container">
