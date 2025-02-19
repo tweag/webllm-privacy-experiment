@@ -37,7 +37,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages }) => {
   }, [messages]);
 
   return (
-    <div className="chat-container">
+    <div className="chat-container" data-testid="chat-container">
       {messages.map((message) => (
         <div 
           key={message.id} 

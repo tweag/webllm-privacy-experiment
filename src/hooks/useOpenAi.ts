@@ -29,16 +29,17 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
     
     if (finalConfig.enabled === false) {
       console.warn('OpenAI hook is disabled');
-      return;
+      return Promise.reject(new Error('OpenAI hook is disabled'));
+    }
+    
+    setIsLoading(true);
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!apiKey) {
+      setIsLoading(false);
+      return Promise.reject(new Error('OpenAI API key not found. Please add it to your .env file.'));
     }
 
     console.log('Sending message to OpenAI:', message);
-    setIsLoading(true);
-
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key not found. Please add it to your .env file.');
-    }
 
     try {
       const response = await fetch(finalConfig.apiUrl || 'https://api.openai.com/v1/chat/completions', {
@@ -93,6 +94,7 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
                 onUpdate(streamedText);
               } catch (e) {
                 console.error('Error parsing streaming data:', e);
+                onUpdate('');
               }
             }
           }
