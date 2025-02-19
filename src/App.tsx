@@ -14,7 +14,7 @@ function App() {
       {!chatModel.ready && (<ModelDownloadProgress text={chatModel.text}/>)}
       <ChatMessages messages={chatModel.messages} />
       <ChatInput 
-        onSubmit={chatModel.sendMessage} 
+        onSendMessage={chatModel.sendMessage} 
         isLoading={chatModel.isLoading} 
         maxTokens={MAX_TOKENS}
         disabled={!chatModel.ready}

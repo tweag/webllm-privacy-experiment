@@ -1,110 +1,73 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import './ChatInput.css';
 
 interface ChatInputProps {
-  onSubmit: (message: string) => Promise<void>;
-  isLoading: boolean;
-  maxTokens: number;
+  onSendMessage: (message: string) => void;
   disabled?: boolean;
+  isLoading?: boolean;
+  maxTokens?: number;
 }
 
-// Count tokens by splitting text into words
-const countTokens = (text: string): number => {
-  return text.trim().split(/\s+/).filter(token => token.length > 0).length;
-};
-
 export const ChatInput: React.FC<ChatInputProps> = ({ 
-  onSubmit, 
-  isLoading, 
-  maxTokens,
-  disabled = false
+  onSendMessage, 
+  disabled,
+  isLoading = false,
+  maxTokens = 500
 }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [message, setMessage] = useState('');
   const [tokenCount, setTokenCount] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setTokenCount(countTokens(inputValue));
-  }, [inputValue]);
+    const words = message.trim().split(/\s+/).filter(word => word.length > 0);
+    setTokenCount(words.length);
+  }, [message]);
 
-  const resetTextareaHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight + 2, 200)}px`;
+  // Auto-focus when message completes
+  useEffect(() => {
+    if (!isLoading && textareaRef.current) {
+      textareaRef.current.focus();
     }
-  };
+  }, [isLoading]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || tokenCount > maxTokens) return;
-    
-    const prompt = inputValue;
-    setInputValue('');
-    setTokenCount(0);
-    
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = '56px'; // Reset to min-height
+  const handleSendMessage = useCallback(() => {
+    if (message.trim() && !disabled && !isLoading && tokenCount <= maxTokens) {
+      onSendMessage(message.trim());
+      setMessage('');
     }
-    
-    await onSubmit(prompt);
-  };
+  }, [message, disabled, isLoading, tokenCount, maxTokens, onSendMessage]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    const newTokenCount = countTokens(newValue);
-    if (newTokenCount <= maxTokens) {
-      setInputValue(newValue);
-      resetTextareaHeight();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
   return (
-    <div className="input-container">
-      <div className="input-wrapper">
-        <form onSubmit={handleSubmit}>
-          <div className="input-with-button">
-            <div className="input-container-with-counter">
-              <textarea
-                ref={textareaRef}
-                value={inputValue}
-                onChange={handleInputChange}
-                placeholder="Type your message..."
-                className="chat-input"
-                rows={1}
-                disabled={disabled || isLoading}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (inputValue.trim() && tokenCount <= maxTokens && !isLoading && !disabled) {
-                      handleSubmit(e as any);
-                    }
-                  }
-                }}
-              />
-              <div className="input-controls">
-                <div className={`token-counter ${tokenCount > maxTokens * 0.9 ? 'token-counter-warning' : ''}`}>
-                  {tokenCount}/{maxTokens} words
-                </div>
-              </div>
-            </div>
-            <button 
-              type="submit" 
-              className={`submit-button ${isLoading ? 'loading' : ''}`}
-              disabled={isLoading || !inputValue.trim() || tokenCount > maxTokens || disabled}
-            >
-              {isLoading ? (
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM4 12C4 7.58172 7.58172 4 12 4V12H20C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12Z" fill="currentColor"/>
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
-            </button>
+    <div className="chat-input-container">
+      <div className="chat-input-wrapper">
+        <div className="input-container-with-counter">
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message..."
+            disabled={disabled || isLoading}
+            rows={1}
+          />
+          <div className={`token-counter ${tokenCount > maxTokens * 0.9 ? 'token-counter-warning' : ''}`}>
+            {tokenCount}/{maxTokens} words
           </div>
-        </form>
+        </div>
+        <button 
+          onClick={handleSendMessage}
+          disabled={!message.trim() || disabled || isLoading || tokenCount > maxTokens}
+          className={isLoading ? 'loading' : ''}
+        >
+          {isLoading ? '•' : 'Send'}
+        </button>
       </div>
     </div>
   );

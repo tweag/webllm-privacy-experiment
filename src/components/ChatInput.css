@@ -22,46 +22,160 @@
 .input-container-with-counter {
   position: relative;
   flex: 1;
+}
+
+.chat-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1E1E1E;
+  border-top: 1px solid #333;
+  padding: 16px 24px;
+  z-index: 100;
+}
+
+.chat-input-wrapper {
   display: flex;
-  align-items: center;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
 }
 
-.chat-input {
+.input-container-with-counter {
+  position: relative;
+  flex: 1;
+}
+
+.chat-input-container textarea {
   width: 100%;
-  padding: 16px;
-  padding-right: 120px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  height: 44px;
+  padding: 10px 16px;
+  padding-right: 100px;
+  background: #2A2A2A;
+  border: 1px solid #333;
   border-radius: 8px;
-  color: var(--text-primary);
+  color: #fff;
   font-size: 14px;
-  resize: none;
-  min-height: 56px;
-  max-height: 200px;
   line-height: 1.5;
-  font-family: inherit;
-  overflow: hidden;
-}
-
-.chat-input::placeholder {
-  color: var(--text-placeholder);
-}
-
-.chat-input:focus {
+  resize: none;
   outline: none;
-  border-color: var(--border-color);
-  background: var(--bg-input);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
-.input-controls {
+.chat-input-container textarea:focus {
+  border-color: #0077ff;
+  background: #2D2D2D;
+}
+
+.chat-input-container textarea::placeholder {
+  color: #666;
+}
+
+.token-counter {
   position: absolute;
-  right: 48px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 12px;
+  color: #888;
+  background: #2D2D2D;
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 1;
+}
+
+.token-counter-warning {
+  color: #ff4a4a;
+}
+
+.chat-input-container button {
+  height: 44px;
+  width: 80px;
+  padding: 0;
+  background: #0077ff;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  z-index: 1;
+  justify-content: center;
+}
+
+.chat-input-container button:hover:not(:disabled) {
+  background: #0066dd;
+}
+
+.chat-input-container button:disabled {
+  background: #333;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.chat-input-container button.loading {
+  font-size: 24px;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+.chat-input-container button.loading {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.chat-input-container button svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.chat-input-container button.loading svg {
+  animation: spin 1s linear infinite;
+}
+
+/* Model mention styles */
+.model-mention {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 119, 255, 0.1);
+  color: #0077ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  margin: 0 1px;
+}
+
+.model-mention::before {
+  content: '@';
+  color: #0077ff;
+  opacity: 0.7;
+  margin-right: 2px;
+}
+
+/* Styles for the mention text */
+.mention {
+  color: #0077ff;
+  background: rgba(0, 119, 255, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 .model-select {
@@ -78,19 +192,6 @@
 
 .model-select:hover {
   background-color: var(--bg-tertiary);
-}
-
-.token-counter {
-  font-size: 12px;
-  color: var(--text-secondary);
-  background-color: var(--bg-input);
-  padding: 4px 8px;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.token-counter-warning {
-  color: #ff4a4a;
 }
 
 .submit-button {
@@ -156,4 +257,21 @@
 .download-button:hover {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+.formatted-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px;
+  padding-right: 100px;
+  pointer-events: none;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 } 
