@@ -34,10 +34,28 @@ export const useWebLlm = (): UseWebLlmReturn => {
  
   useEffect(() => {
     const initProgressCallback = (obj: InitProgressCallback) => {
+      console.log(obj);
       setText(obj.text);
     };
 
-    CreateMLCEngine(MODEL_NAME, { initProgressCallback }).then(engine => {  
+    CreateMLCEngine('Llama-3.2-1B-Instruct-q4f32_1-MLC', { 
+      initProgressCallback,
+      appConfig: {
+        useIndexedDBCache: true,
+        model_list: [
+            { 
+              model: 'https://huggingface.co/mlc-ai/Llama-3.2-1B-Instruct-q4f32_1-MLC', 
+              model_id: 'Llama-3.2-1B-Instruct-q4f32_1-MLC',
+              model_lib: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_48/Llama-3.2-1B-Instruct-q4f32_1-ctx4k_cs1k-webgpu.wasm",
+              vram_required_MB: 1128.82,
+              low_resource_required: true,
+              overrides: {
+                context_window_size: 4096,
+              },
+            },
+        ],
+      }
+     }).then(engine => {  
       setEngine(engine);
       setReady(true);
     }).catch(error => {
@@ -54,7 +72,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
       const analysisPrompt = COMPLEXITY_ANALYSIS_PROMPT + prompt;
       const response = await engine.chat.completions.create({
         messages: [
-          { role: "system", content: "You are a prompt complexity analyzer." },
+          { role: "system", content: "You are a prompt complexity analyzer. Always respond with a JSON object containing isComplex (boolean), reason (string), and confidence (number between 0 and 1)." },
           { role: "user", content: analysisPrompt }
         ],
         temperature: 0.1, // Low temperature for more consistent analysis
@@ -64,18 +82,37 @@ export const useWebLlm = (): UseWebLlmReturn => {
       const analysisText = response.choices[0]?.message?.content || '';
       
       try {
-        const analysis = JSON.parse(analysisText) as ComplexityAnalysis;
+        // Try to extract JSON from the response if it's embedded in other text
+        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : analysisText;
+        
+        const analysis = JSON.parse(jsonStr) as ComplexityAnalysis;
+        
+        // Validate the parsed object has the required properties
+        if (typeof analysis.isComplex !== 'boolean' || 
+            typeof analysis.reason !== 'string' || 
+            typeof analysis.confidence !== 'number') {
+          throw new Error('Invalid analysis format');
+        }
+        
         return {
           isComplex: analysis.isComplex,
           reason: analysis.reason,
-          confidence: analysis.confidence
+          confidence: Math.max(0, Math.min(1, analysis.confidence)) // Ensure confidence is between 0 and 1
         };
       } catch (parseError) {
         console.error('Error parsing complexity analysis:', parseError);
+        console.log('Raw analysis text:', analysisText);
+        
+        // Fallback analysis based on text content
+        const isComplex = analysisText.toLowerCase().includes('complex') || 
+                         analysisText.toLowerCase().includes('difficult') ||
+                         analysisText.toLowerCase().includes('challenging');
+                         
         return {
-          isComplex: true, // Default to OpenAI if we can't parse the analysis
-          reason: 'Failed to analyze complexity',
-          confidence: 1
+          isComplex,
+          reason: 'Fallback analysis due to parsing error',
+          confidence: 0.6
         };
       }
     } catch (error) {

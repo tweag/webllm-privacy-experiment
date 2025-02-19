@@ -23,7 +23,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setTokenCount(words.length);
   }, [message]);
 
-  // Auto-focus when message completes
+  // Focus the input when loading state changes from true to false
   useEffect(() => {
     if (!isLoading && textareaRef.current) {
       textareaRef.current.focus();
@@ -43,6 +43,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       handleSendMessage();
     }
   };
+
+  // Focus input on component mount
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className="chat-input-container">

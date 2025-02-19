@@ -94,4 +94,11 @@
 .download-start-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+}
+
+.timer {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-variant-numeric: tabular-nums;
 } 
