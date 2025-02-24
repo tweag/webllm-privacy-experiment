@@ -1,31 +1,20 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useChatModel } from '../useChatModel';
-import { useWebLlm } from '../useWebLlm';
-import { useOpenAi } from '../useOpenAi';
+import { useChatModel } from './useChatModel';
+import { useWebLlm } from './useWebLlm';
 
 // Mock the hooks
-vi.mock('../useWebLlm', () => ({
+vi.mock('./useWebLlm', () => ({
   useWebLlm: vi.fn(() => ({
     ready: true,
     text: null,
     isLoading: false,
     analyzeComplexity: vi.fn(async () => ({
-      isComplex: false,
-      reason: 'Test',
-      confidence: 0.9
+      complexity: 5,
+      explanation: 'Test'
     })),
     sendMessage: vi.fn(async (message, messages, onUpdate) => {
       onUpdate('WebLLM Response');
-    })
-  }))
-}));
-
-vi.mock('../useOpenAi', () => ({
-  useOpenAi: vi.fn(() => ({
-    isLoading: false,
-    sendMessage: vi.fn(async (message, messages, onUpdate) => {
-      onUpdate('OpenAI Response');
     })
   }))
 }));
@@ -54,18 +43,6 @@ describe('useChatModel', () => {
     expect(result.current.messages).toHaveLength(2);
     expect(result.current.messages[1].text).toBe('WebLLM Response');
     expect(result.current.messages[1].source).toBe('WebLLM');
-  });
-
-  it('should handle message with OpenAI when specified', async () => {
-    const { result } = renderHook(() => useChatModel());
-    
-    await act(async () => {
-      await result.current.sendMessage('test message @openai');
-    });
-
-    expect(result.current.messages).toHaveLength(2);
-    expect(result.current.messages[1].text).toBe('OpenAI Response');
-    expect(result.current.messages[1].source).toBe('OpenAI');
   });
 
   it('should handle message with WebLLM when specified', async () => {

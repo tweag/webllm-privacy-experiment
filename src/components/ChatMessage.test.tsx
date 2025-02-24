@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import { ChatMessage } from '../ChatMessage';
-import { Message } from '../../types/chat';
+import { ChatMessage } from './ChatMessage';
+import { Message } from '../../types/message';
 
 describe('ChatMessage', () => {
   it('renders user message correctly', () => {

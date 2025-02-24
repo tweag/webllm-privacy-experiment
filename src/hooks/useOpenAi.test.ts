@@ -1,7 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useOpenAi } from '../useOpenAi';
-import { Message } from '../../types/chat';
+import { useOpenAi } from './useOpenAi';
+import { Message } from '../models/message';
+import { CHAT } from '../config';
 
 describe('useOpenAi', () => {
   beforeEach(() => {
@@ -173,9 +174,9 @@ describe('useOpenAi', () => {
     const onUpdate = vi.fn();
 
     const messages: Message[] = [
-      { id: 1, text: 'user message', isUser: true, source: undefined },
-      { id: 2, text: 'analyzing...', isUser: false, source: 'Analyzing' },
-      { id: 3, text: 'assistant message', isUser: false, source: undefined }
+      { id: '1', text: 'user message', isUser: true, source: undefined },
+      { id: '2', text: 'analyzing...', isUser: false, source: CHAT.MESSAGE_SOURCE.ANALYZING },
+      { id: '3', text: 'assistant message', isUser: false, source: undefined }
     ];
 
     await act(async () => {

@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
-import { Message, OpenAIConfig } from '../types/chat';
+import { Message } from '../models/message';
+import { OpenAIConfig } from '../models/openai';
+import { MODEL, CHAT } from '../config';
 
 interface UseOpenAiReturn {
   isLoading: boolean;
@@ -10,13 +12,6 @@ interface UseOpenAiReturn {
   ) => Promise<void>;
 }
 
-const DEFAULT_CONFIG: OpenAIConfig = {
-  model: 'gpt-4',
-  temperature: 0.7,
-  maxTokens: 1000,
-  apiUrl: 'https://api.openai.com/v1/chat/completions'
-};
-
 export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,7 +20,7 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
     currentMessages: Message[],
     onUpdate: (text: string) => void
   ) => {
-    const finalConfig = { ...DEFAULT_CONFIG, ...config };
+    const finalConfig = { ...MODEL.DEFAULT_CONFIG, ...config };
     
     if (finalConfig.enabled === false) {
       console.warn('OpenAI hook is disabled');
@@ -42,25 +37,25 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
     console.log('Sending message to OpenAI:', message);
 
     try {
-      const response = await fetch(finalConfig.apiUrl || 'https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(finalConfig.API_URL || MODEL.DEFAULT_CONFIG.API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: finalConfig.model,
+          model: finalConfig.MODEL || MODEL.DEFAULT_CONFIG.MODEL,
           messages: [
             ...currentMessages
-              .filter(msg => msg.source !== 'Analyzing') // Filter out analyzing messages
+              .filter(msg => msg.source !== CHAT.MESSAGE_SOURCE.ANALYZING)
               .map(msg => ({
                 role: msg.isUser ? 'user' : 'assistant',
                 content: msg.text
               })),
             { role: 'user', content: message }
           ],
-          temperature: finalConfig.temperature,
-          max_tokens: finalConfig.maxTokens,
+          temperature: finalConfig.TEMPERATURE || MODEL.DEFAULT_CONFIG.TEMPERATURE,
+          max_tokens: finalConfig.MAX_TOKENS || MODEL.DEFAULT_CONFIG.MAX_TOKENS,
           stream: true,
         }),
       });

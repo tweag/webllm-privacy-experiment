@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import App from '../../App';
-import { useChatModel } from '../../hooks/useChatModel';
-import { Message } from '../../types/chat';
+import App from './App';
+import { useChatModel } from './hooks/useChatModel';
+import { Message } from './models/message';
 
 // Mock the useChatModel hook
-vi.mock('../../hooks/useChatModel', () => ({
+vi.mock('./hooks/useChatModel', () => ({
   useChatModel: vi.fn()
 }));
 
@@ -32,8 +32,8 @@ describe('App', () => {
 
   it('renders ready state correctly', () => {
     const messages: Message[] = [
-      { id: 1, text: 'Hello', isUser: true, source: 'User' },
-      { id: 2, text: 'Hi there!', isUser: false, source: 'WebLLM' }
+      { id: '1', text: 'Hello', isUser: true, source: 'User' },
+      { id: '2', text: 'Hi there!', isUser: false, source: 'WebLLM' }
     ];
 
     vi.mocked(useChatModel).mockReturnValue({
@@ -78,7 +78,7 @@ describe('App', () => {
   it('passes correct props to child components', () => {
     const mockSendMessage = vi.fn();
     const mockMessages: Message[] = [
-      { id: 1, text: 'Test message', isUser: true, source: 'User' }
+      { id: '1', text: 'Test message', isUser: true, source: 'User' }
     ];
 
     vi.mocked(useChatModel).mockReturnValue({

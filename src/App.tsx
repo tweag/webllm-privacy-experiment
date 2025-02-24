@@ -2,9 +2,8 @@ import { useChatModel } from './hooks/useChatModel';
 import { ChatMessages } from './components/ChatMessages';
 import { ChatInput } from './components/ChatInput';
 import { ModelDownloadProgress } from './components/ModelDownloadProgress';
+import { CHAT } from './config';
 import './components/App.css';
-
-const MAX_TOKENS = 500;
 
 function App() {
   const chatModel = useChatModel();
@@ -16,7 +15,7 @@ function App() {
       <ChatInput 
         onSendMessage={chatModel.sendMessage} 
         isLoading={chatModel.isLoading} 
-        maxTokens={MAX_TOKENS}
+        maxTokens={CHAT.MAX_TOKENS}
         disabled={!chatModel.ready}
       />
     </div>

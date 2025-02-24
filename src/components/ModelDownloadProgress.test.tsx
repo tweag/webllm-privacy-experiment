@@ -1,6 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ModelDownloadProgress } from '../ModelDownloadProgress';
+import { ModelDownloadProgress } from './ModelDownloadProgress';
 
 describe('ModelDownloadProgress', () => {
   beforeEach(() => {

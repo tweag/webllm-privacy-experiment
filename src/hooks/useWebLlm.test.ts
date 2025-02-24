@@ -1,8 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useWebLlm } from '../useWebLlm';
-import { CreateMLCEngine, MLCEngine } from '@mlc-ai/web-llm';
-import { Message } from '../../types/chat';
+import { useWebLlm } from './useWebLlm';
+import { CreateMLCEngine } from '@mlc-ai/web-llm';
+import { Message } from '../models/message';
 
 // Mock the web-llm library
 vi.mock('@mlc-ai/web-llm', () => ({
@@ -72,7 +72,7 @@ describe('useWebLlm', () => {
     const mockResponse = {
       choices: [{
         message: {
-          content: '{"isComplex": true, "reason": "Test", "confidence": 0.9}'
+          content: 'Score: 7\nExplanation: This is a complex piece of code'
         }
       }]
     };
@@ -97,9 +97,8 @@ describe('useWebLlm', () => {
     const analysis = await result.current.analyzeComplexity('test prompt');
     
     expect(analysis).toEqual({
-      isComplex: true,
-      reason: 'Test',
-      confidence: 0.9
+      complexity: 7,
+      explanation: 'This is a complex piece of code'
     });
   });
 
@@ -132,9 +131,8 @@ describe('useWebLlm', () => {
     const analysis = await result.current.analyzeComplexity('test prompt');
     
     expect(analysis).toEqual({
-      isComplex: false,
-      reason: 'Fallback analysis due to parsing error',
-      confidence: 0.6
+      complexity: 5,
+      explanation: 'Error during complexity analysis'
     });
   });
 
@@ -159,9 +157,8 @@ describe('useWebLlm', () => {
     const analysis = await result.current.analyzeComplexity('test prompt');
     
     expect(analysis).toEqual({
-      isComplex: true,
-      reason: 'Error during complexity analysis',
-      confidence: 1
+      complexity: 5,
+      explanation: 'Error during complexity analysis'
     });
   });
 
@@ -260,9 +257,9 @@ describe('useWebLlm', () => {
     });
 
     const messages: Message[] = [
-      { id: 1, text: 'User message', isUser: true, source: 'User' },
-      { id: 2, text: 'Analyzing...', isUser: false, source: 'Analyzing' },
-      { id: 3, text: 'AI response', isUser: false, source: 'WebLLM' }
+      { id: '1', text: 'User message', isUser: true, source: 'User' },
+      { id: '2', text: 'Analyzing...', isUser: false, source: 'Analyzing' },
+      { id: '3', text: 'AI response', isUser: false, source: 'WebLLM' }
     ];
 
     await result.current.sendMessage('test', messages, () => {});
