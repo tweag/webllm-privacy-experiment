@@ -13,7 +13,7 @@ vi.mock('./useWebLlm', () => ({
       complexity: 5,
       explanation: 'Simple query'
     })),
-    sendMessage: vi.fn(async (message, messages, onUpdate) => {
+    sendMessage: vi.fn(async (_message, _messages, onUpdate) => {
       onUpdate('WebLLM Response');
     })
   }))
@@ -22,7 +22,7 @@ vi.mock('./useWebLlm', () => ({
 vi.mock('./useOpenAi', () => ({
   useOpenAi: vi.fn(() => ({
     isLoading: false,
-    sendMessage: vi.fn(async (message, messages, onUpdate) => {
+    sendMessage: vi.fn(async (_message, _messages, onUpdate) => {
       onUpdate('OpenAI Response');
     })
   }))

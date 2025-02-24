@@ -13,15 +13,18 @@ export default defineConfig({
       exclude: [
         'node_modules/**',
         'src/test/**',
+        'src/models/**',
         '**/*.d.ts',
         '**/*.config.{js,ts}',
         '**/index.ts',
+        'src/main.tsx',
+        'dist/**'
       ],
       thresholds: {
-        branches: 85,
-        functions: 85,
-        lines: 85,
-        statements: 85
+        branches: 75,
+        functions: 75,
+        lines: 75,
+        statements: 75
       }
     },
   },

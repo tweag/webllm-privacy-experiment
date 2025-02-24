@@ -1,39 +1,46 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { ChatMessages } from './ChatMessages';
-import { Message } from '../../types/message';
+import { Message } from '../models/message';
 
 describe('ChatMessages', () => {
+  const messages: Message[] = [
+    {
+      id: '1',
+      text: 'Hello',
+      isUser: true,
+      source: 'User'
+    },
+    {
+      id: '2',
+      text: 'Hi there!',
+      isUser: false,
+      source: 'AI'
+    }
+  ];
+
   it('renders messages correctly', () => {
-    const messages: Message[] = [
-      { id: 1, text: 'Hello', isUser: true, source: 'User' },
-      { id: 2, text: 'Hi there!', isUser: false, source: 'WebLLM' }
-    ];
-    
     render(<ChatMessages messages={messages} />);
     
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText('Hi there!')).toBeInTheDocument();
   });
 
-  it('displays correct source labels', () => {
-    const messages: Message[] = [
-      { id: 1, text: 'Hello', isUser: true, source: 'User' },
-      { id: 2, text: 'Hi there!', isUser: false, source: 'WebLLM' }
-    ];
-    
+  it('renders message sources correctly', () => {
     render(<ChatMessages messages={messages} />);
     
     expect(screen.getByText('You')).toBeInTheDocument();
-    expect(screen.getByText('WebLLM')).toBeInTheDocument();
+    expect(screen.getByText('AI')).toBeInTheDocument();
+  });
+
+  it('displays correct source labels', () => {
+    render(<ChatMessages messages={messages} />);
+    
+    expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.getByText('AI')).toBeInTheDocument();
   });
 
   it('applies correct CSS classes', () => {
-    const messages: Message[] = [
-      { id: 1, text: 'Hello', isUser: true, source: 'User' },
-      { id: 2, text: 'Hi there!', isUser: false, source: 'WebLLM' }
-    ];
-    
     render(<ChatMessages messages={messages} />);
     
     const userMessage = screen.getByText('Hello').closest('.message');
@@ -52,7 +59,7 @@ describe('ChatMessages', () => {
 
   it('displays default AI source when source is undefined', () => {
     const messages: Message[] = [
-      { id: 1, text: 'AI response', isUser: false }
+      { id: '1', text: 'AI response', isUser: false }
     ];
     
     render(<ChatMessages messages={messages} />);

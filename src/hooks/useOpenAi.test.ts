@@ -149,7 +149,7 @@ describe('useOpenAi', () => {
     let capturedBody: string | undefined;
     
     // Simple fetch mock that captures the request body
-    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+    const fetchMock = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
       capturedBody = init?.body as string;
       return Promise.resolve({
         ok: true,
