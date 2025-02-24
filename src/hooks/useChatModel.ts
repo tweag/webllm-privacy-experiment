@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useWebLlm } from './useWebLlm';
 import { useOpenAi } from './useOpenAi';
-import { Message } from '../types/chat';
+import { Message } from '../models/message';
 
 interface UseChatModelReturn {
   messages: Message[];
@@ -22,7 +22,7 @@ export const useChatModel = (): UseChatModelReturn => {
 
     // Add user message to the shared history
     const userMessage: Message = {
-      id: Date.now(),
+      id: Date.now().toString(),
       text: message,
       isUser: true,
       source: 'User'
@@ -30,7 +30,7 @@ export const useChatModel = (): UseChatModelReturn => {
     setMessages(prev => [...prev, userMessage]);
 
     // Create a placeholder message for the AI response
-    const aiMessageId = Date.now() + 1;
+    const aiMessageId = (Date.now() + 1).toString();
     const aiMessage: Message = {
       id: aiMessageId,
       text: '',
@@ -67,14 +67,14 @@ export const useChatModel = (): UseChatModelReturn => {
         const analysis = await webLlm.analyzeComplexity(message);
         console.log('Complexity analysis:', analysis);
 
-        // Use OpenAI if the prompt is complex or if the word count is too high
+        // Use OpenAI if the prompt is complex (score > 7) or if the word count is too high
         const wordCount = message.trim().split(/\s+/).length;
-        shouldUseOpenAI = analysis.isComplex || wordCount > 100;
+        shouldUseOpenAI = analysis.complexity > 7 || wordCount > 100;
 
         console.log('Model selection:', {
           shouldUseOpenAI,
-          reason: analysis.reason,
-          confidence: analysis.confidence,
+          explanation: analysis.explanation,
+          complexity: analysis.complexity,
           wordCount
         });
       }
@@ -119,7 +119,7 @@ export const useChatModel = (): UseChatModelReturn => {
           msg.id === aiMessageId 
             ? {
                 ...msg,
-                text: error instanceof Error ? error.message : 'An error occurred while processing the message.',
+                text: error instanceof Error ? error.message : 'Unknown error',
                 source: 'Error'
               }
             : msg
@@ -128,7 +128,7 @@ export const useChatModel = (): UseChatModelReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [webLlm, openAi, messages]);
+  }, [messages, openAi, webLlm]);
 
   return {
     messages,

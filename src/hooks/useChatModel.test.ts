@@ -11,10 +11,19 @@ vi.mock('./useWebLlm', () => ({
     isLoading: false,
     analyzeComplexity: vi.fn(async () => ({
       complexity: 5,
-      explanation: 'Test'
+      explanation: 'Simple query'
     })),
     sendMessage: vi.fn(async (message, messages, onUpdate) => {
       onUpdate('WebLLM Response');
+    })
+  }))
+}));
+
+vi.mock('./useOpenAi', () => ({
+  useOpenAi: vi.fn(() => ({
+    isLoading: false,
+    sendMessage: vi.fn(async (message, messages, onUpdate) => {
+      onUpdate('OpenAI Response');
     })
   }))
 }));
@@ -64,9 +73,8 @@ describe('useChatModel', () => {
       text: null,
       isLoading: false,
       analyzeComplexity: vi.fn(async () => ({
-        isComplex: false,
-        reason: 'Test',
-        confidence: 0.9
+        complexity: 5,
+        explanation: 'Simple query'
       })),
       sendMessage: vi.fn(async () => {
         throw new Error('Test error');
@@ -91,9 +99,8 @@ describe('useChatModel', () => {
       text: null,
       isLoading: false,
       analyzeComplexity: vi.fn(async () => ({
-        isComplex: true,
-        reason: 'Complex query',
-        confidence: 0.9
+        complexity: 9,
+        explanation: 'Complex query'
       })),
       sendMessage: vi.fn()
     }));
