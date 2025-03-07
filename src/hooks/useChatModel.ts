@@ -69,12 +69,12 @@ export const useChatModel = (): UseChatModelReturn => {
 
         // Use OpenAI if the prompt is complex (score > 7) or if the word count is too high
         const wordCount = message.trim().split(/\s+/).length;
-        shouldUseOpenAI = analysis.complexity > 7 || wordCount > 100;
+        shouldUseOpenAI = analysis.llm === 'openai';
 
         console.log('Model selection:', {
           shouldUseOpenAI,
           explanation: analysis.explanation,
-          complexity: analysis.complexity,
+          llm: analysis.llm,
           wordCount
         });
       }
