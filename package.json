@@ -7,10 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint src/",
-    "preview": "vite preview",
-    "test": "vitest run --coverage",    
-    "test:ui": "vitest --ui",
-    "test:watch": "vitest watch"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.78",
