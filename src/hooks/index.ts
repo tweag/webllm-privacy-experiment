@@ -7,4 +7,4 @@
 
 export { useChatModel } from './useChatModel';
 export { useOpenAi } from './useOpenAi';
-export { useWebLlm } from './useWebLlm'; 
+export { useWebLlm } from './useWebllm'; 
