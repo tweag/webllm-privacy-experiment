@@ -10,31 +10,42 @@ WebLLM is a framework that enables **local execution of LLMs within the browser*
 
 ### Key Considerations:
 
-- **Model size and download time** – The initial download can be significant; in our case, it took **45 minutes**.
 - **Hardware dependency** – Requires a GPU-compatible browser and adequate system resources. Not all browsers support WebGPU, which can limit accessibility and performance across different devices.
 - **Mobile device limitations** – WebLLM is currently **not supported on iPhones and most Android devices**, making it less accessible for mobile applications.
 - **Inference performance** – While functional, it is not yet as reliable as larger cloud-hosted models.
-
-## The Proof of Concept
-
-We developed a **chat interface** using **ReactJS** that determines whether to use **WebLLM or OpenAI’s API** based on the complexity of the user’s query.
-
-### How It Works:
-
-1. **Simple queries (e.g., “What is the capital of the United States?”)** are processed directly in the browser using WebLLM.
-2. **Complex queries (e.g., “What is the purpose of life?”)** are routed to OpenAI’s API.
-
-This hybrid approach balances **cost efficiency and responsiveness**, leveraging WebLLM where possible while ensuring accuracy for more nuanced questions.
 
 ## First-Time User Experience
 
 One of the key challenges with WebLLM is the **initial setup**.
 
-- **Large model downloads** can be time-consuming, depending on internet speed. In our case, the initial download took over **45 minutes**, which could vary based on network conditions and hardware capabilities.
-- **First-time execution requires model preparation**, which introduces an additional delay.
-- **Subsequent runs benefit from browser caching (IndexedDB)**, eliminating the need for repeated downloads. However, even with caching, each page reload requires reading from the cache, which can take a few seconds.
+- **Large model downloads** can be time-consuming, depending on internet speed. In our case, the initial download took over a couple of minutes, which could vary based on network conditions and hardware capabilities, such as:
 
-While caching improves long-term usability, the onboarding experience needs refinement for broader adoption.
+| Region                 | Download Time     | Notes                                                   |
+| ---------------------- | ----------------- | ------------------------------------------------------- |
+| EU (1 Gbps fibre)      | roughly 30 s      | 700 MB delivered at about 730 Mbps on an MacBook Pro    |
+| Brazil (50 Mbps cable) | roughly 3–4 min   | Same hardware, consumer-grade link                      |
+| Rural 4 G (12 Mbps)    | roughly 20–45 min | Worst-case scenario we could reproduce                  |
+
+- Once the bundle lands, the browser persists it in **IndexedDB**. We considered the File System Access API for faster look-ups, but the extra security prompts would have added friction to the onboarding flow. For our PoC the IndexedDB read on page refresh felt acceptable while production apps may opt for a service-worker cache or a hidden “warming” tab to hide that delay. While caching improves long-term usability, the onboarding experience needs refinement for broader adoption. 
+
+- **Background fetch pattern** – imagine a single-page enterprise app that users spend several minutes configuring before invoking any AI features. A service worker can silently pre-download the WebLLM bundle during those “thinking” minutes, avoiding a blocking spinner when the user finally clicks *Chat with AI*. The same worker could house-keep older model versions to stay within storage quotas.
+
+## The Proof of Concept
+
+We built a **React-based chat interface** that decides on every prompt whether to call **WebLLM** or **OpenAI’s GPT-4o**. Decision logic lives in a lightweight webllm engine running on the browser with browser GPU optimzed models:
+
+1. The user sends a message in the chat interface.
+2. The webllm engine in the react code applies redacts people's or organization names. The original text never leaves the browser memory.
+3. The redacted prompt is sent to either to WebLLM (local inference) **or** to OpenAI, based on complexity analysis done by another webllm prompt.
+4. The response returns to the browser (when sent to Open AI), which re-injects placeholders for readability and streams it to the client.
+
+### Complexity Analyzer - How it works
+
+1. **Simple queries** (“What’s the capital of France ?”) never cross the network; WebLLM answers locally and quickly.
+2. **Complex or multi-paragraph prompts** are forwarded to GPT-4o, ensuring parity with our existing chatbot quality bar.
+3. Users can override the auto-selection by prefixing `@webllm` or `@openai`.
+
+This hybrid flow achieves a sweet spot: **cost savings** on low-value prompts, **quality** on high-value ones, and **privacy** via in-browser redaction.
 
 ## Challenges and Limitations
 
@@ -43,15 +54,26 @@ While caching improves long-term usability, the onboarding experience needs refi
 To determine whether a query should be handled by WebLLM or OpenAI, we implemented the following prompt:
 
 ```
-Analyze the complexity of the following user prompt and decide which LLM should handle it:
-  - "webllm" for very simple queries that are suitable for small, in-browser models.
-  - "openai" for complex queries that require a more advanced model.
+Role: Prompt Complexity Rater  
+Context: You receive exactly one user prompt.  
+Goal: Return a complexity score from 1 to 5 using the rubric below.  
+Rubric  
+* 1 Very simple – single fact, trivial lookup  
+* 2 Simple – short answer, light reasoning  
+* 3 Moderate – some domain terms or two-step reasoning  
+* 4 Hard – multi-step reasoning or long context  
+* 5 Very hard – deep domain knowledge or several subtasks  
 
-Your response must follow this exact format:
-LLM: [webllm or openai]
-Explanation: [a brief explanation of your decision]
+Process  
+1. Classify the prompt against the rubric.  
+2. Output ONLY the JSON object:  
+  {"score": <integer 1-5>, "explanation": "<max 100 words>"}
 
-User Prompt:
+Rules  
+* If torn between two scores pick the higher one.  
+* Do not reveal chain of thought or extra text.
+* Write a comprehensive explanation of the score in less than 100 words that deeply explains your reasoning and decision.  
+* If as part of the reason you return an error, please explain the error in the explanation field.
 ```
 
 While WebLLM introduces a compelling approach to local inference, it remains **unpredictable** in certain cases.
@@ -61,7 +83,7 @@ For example, when asked:
 
 Instead of processing this simple arithmetic question locally, WebLLM **classified it as complex** and forwarded it to OpenAI’s API. The inconsistency in inference logic highlights areas that require further optimization.
 
-However, this **unreliability is more related to the smaller models** than to WebLLM itself. Even if the same smaller models were running server-side, we would likely see similar unpredictability in responses.
+However, this **unreliability is more related to the smaller models** than to WebLLM itself. Even if the same smaller models were running server-side, we would likely see similar unpredictability in responses. This erradic behavior was also noted in the redaction process that often missed full name of people or orgnaztion and wasn't able to redact it, specially when more than one name was sent in the prompt.
 
 Additionally, performance varies significantly based on hardware capabilities, making standardization across user environments a challenge.
 
@@ -69,7 +91,7 @@ Additionally, performance varies significantly based on hardware capabilities, m
 
 To improve user experience, we implemented a **mention-based system**:
 
-- If a user types `@WebLLM`, the system **forces WebLLM to generate the response**.
+- If a user types `@webllm`, the system **forces WebLLM to generate the response**.
 - Without a mention, the system dynamically selects either WebLLM or OpenAI.
 
 This gives users greater control over inference execution and helps mitigate some of the unpredictability in query classification.
@@ -179,14 +201,99 @@ for await (const chunk of chunks) {
 }
 ```
 
-## Future Enhancements
+### Complexity Analyzes
 
-A key enhancement we plan to explore is **fine-tuning a model specifically for PII redaction** as a privacy feature. This would enable WebLLM to preprocess user queries by removing sensitive details before sending them to an external API like OpenAI. By automatically detecting and replacing personally identifiable information (PII) with placeholders, we can ensure compliance with privacy regulations such as GDPR and HIPAA while maintaining response accuracy. This capability would be particularly useful in industries like healthcare, finance, and legal services where data security is critical.
+```javascript
+export const useComplexityAnalysis = (engine: MLCEngine | null) => {
+  const analyzeComplexity = useCallback(async (userQuery: string): Promise<ComplexityAnalysis> => {
+    if (!engine) {
+      throw new Error('WebLLM engine not initialized');
+    }
+
+    try {
+
+      const response = await engine.chat.completions.create({
+        messages: [
+          { role: "system", content: `
+              Role: Prompt Complexity Rater  
+              Context: You receive exactly one user prompt.  
+              Goal: Return a complexity score from 1 to 5 using the rubric below.  
+              Rubric  
+              * 1 Very simple – single fact, trivial lookup  
+              * 2 Simple – short answer, light reasoning  
+              * 3 Moderate – some domain terms or two-step reasoning  
+              * 4 Hard – multi-step reasoning or long context  
+              * 5 Very hard – deep domain knowledge or several subtasks  
+
+              Process  
+              1. Classify the prompt against the rubric.  
+              2. Output ONLY the JSON object:  
+                {"score": <integer 1-5>, "explanation": "<max 100 words>"}
+
+              Rules  
+              * If torn between two scores pick the higher one.  
+              * Do not reveal chain of thought or extra text.
+              * Write a comprehensive explanation of the score in less than 100 words that deeply explains your reasoning and decision.  
+              * If as part of the reason you return an error, please explain the error in the explanation field.
+            ` },
+          { role: "user", content: `User query: ${userQuery}` }
+        ],
+        temperature: 0,
+        max_tokens: 200,
+        response_format: {
+          type: 'json_object',
+          schema: JSON.stringify(zodToJsonSchema(
+            z.object({ score: z.number().min(1).max(5), explanation: z.string() })
+          )),
+        },
+      });
+
+      const { score, explanation } = JSON.parse(response.choices[0]?.message?.content || '');
+
+      console.log('Complexity analysis response:', { score, explanation });
+
+      if (!score || !explanation) {
+        throw new Error('Invalid analysis format');
+      }
+
+      return { llm: score < 3 ? 'webllm' : 'openai', explanation };
+
+    } catch (error) {
+      console.error('Error analyzing complexity:', error);
+      return {
+        llm: 'webllm',
+        explanation: 'Error during complexity analysis'
+      };
+    }
+  }, [engine]);
+
+  return { analyzeComplexity };
+}; 
+```
+
+### Real-world latency side-by-side
+
+Below is a short screen-capture comparing our PoC (right pane, running WebLLM locally) with the standard ChatGPT interface (left pane, hitting the cloud). The prompt is fired at the exact same time on both sides.
+
+![Side-by-side latency: ChatGPT (left) vs WebLLM (right)](./compare.gif)
+
+What you can’t unsee:
+
+* **WebLLM streams its first tokens in under a second.**  
+* **ChatGPT sits on “Thinking…” for ~8 s before any text appears**, even on a solid fibre connection.  
+* Once both models are “warm,” generation speeds converge, but the *time-to-first-token* advantage of running inference in-browser is hard to beat.
+
+This clip reinforces an earlier point: when the model is already cached locally, WebLLM can deliver near-instant responses—a game-changer for UX in bandwidth-constrained or privacy-sensitive environments.
+
+
+## Possible Enhancements
+
+A key enhancement that can explored is **fine-tuning a model specifically for PII redaction** as a privacy feature. This would enable WebLLM to preprocess user queries by removing sensitive details before sending them to an external API like OpenAI. By automatically detecting and replacing personally identifiable information (PII) with placeholders, we can ensure compliance with privacy regulations such as GDPR and HIPAA while maintaining response accuracy. This capability would be particularly useful in industries like healthcare, finance, and legal services where data security is critical.
 
 ## What’s Next?
 
-We will continue refining this proof of concept, testing edge cases, and exploring optimizations. As WebLLM matures, we will share further insights on its viability for real-world applications.
+We’ll keep a close watch on WebLLM’s roadmap—tracking performance fixes, mobile-browser coverage, and smaller-footprint model releases. When the tech reaches a point where latency and stability are production-grade, we’ll dive back in, harden the PoC, and publish new findings on integrating browser-side inference into real apps.
 
-For now, it remains **an exciting area of experimentation** that could redefine how AI-powered frontend architectures operate. If you have thoughts or questions, we’d love to hear them!
+Web-executed LLMs remain an exciting frontier that could upend how AI-powered front-end architectures work, shifting costs and privacy guarantees toward the user’s device. Got thoughts or questions? Drop us a line—we’re all ears.
 
 
