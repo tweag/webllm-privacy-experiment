@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useWebLlm } from './useWebLlm';
+import { useWebLlm } from './useWebllm';
 import { useOpenAi } from './useOpenAi';
 import { Message } from '../models/message';
 
