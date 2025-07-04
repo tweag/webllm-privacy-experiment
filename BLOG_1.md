@@ -2,11 +2,20 @@
 
 As AI continues to evolve, the demand for **fast, cost-effective, and privacy-conscious** applications is growing. Traditionally, large language models (LLMs) like ChatGPT run on powerful and expensive backend servers, requiring constant API calls for inference. However, **WebLLM** introduces a new paradigm: running LLMs **directly in the browser** using WebGPU, eliminating the need for cloud-based requests.
 
+This is part of what's being referred to as Web AI, the practice of using machine learning models that run client-side and execute on the user's own device, leveraging web technologies such as JavaScript, WebAssembly, and WebGPU or WebNN for acceleration.
+
 While this technology presents exciting possibilities, it is still in its early stages. In this post, we will walk through our **proof of concept**, discussing its capabilities, limitations, and what improvements are needed for WebLLM to become a viable solution for production applications.
 
 ## What is WebLLM?
 
 [WebLLM](https://github.com/mlc-ai/web-llm) is a framework that enables **local execution of LLMs within the browser** using WebGPU acceleration. Instead of relying on external servers, users can download a **compact model**, such as **Llama 3 (8 billion parameters)**, and perform inference directly on their machines.
+
+If you're curious how WebLLM works, here is a high-level overview:
+
+- To achieve high performance for the computationally intensive LLM workloads, WebLLM compiles performant WebGPU kernels by leveraging 2 other libraries under the hood.
+- WebGPU acts as an abstraction layer, allowing a single kernel to run efficiently across different GPUs (NVIDIA, AMD, Apple Metal) without needing separate implementations for each.
+- WebLLM compiles model weights and a WebAssembly (Wasm) library containing these WebGPU kernels ahead of time; these are then downloaded and cached by the browser.
+- The authors of the tool have measured that WebGPU kernels can maintain approximately 85% of native performance. You can read more about it here.
 
 ### Key Considerations:
 
