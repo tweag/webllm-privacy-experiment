@@ -41,7 +41,7 @@ One of the key challenges with WebLLM is the **initial setup**.
 
 ## The Proof of Concept
 
-We built a **React-based chat interface** that decides on every prompt whether to call **WebLLM** or **OpenAI’s GPT-4o**, and removes personally identifiable information (PII) from user queries in the case they are sent to OpenAI's cloud-based service. Decision logic lives in a lightweight WebLLM engine running on the browser with browser GPU optimzed models:
+We built a [**React-based chat interface**](https://github.com/tweag/webllm-privacy-experiment) that decides on every prompt whether to call **WebLLM** or **OpenAI’s GPT-4o**, and removes personally identifiable information (PII) from user queries in the case they are sent to OpenAI's cloud-based service. Decision logic lives in a lightweight WebLLM engine running on the browser with browser GPU optimzed models:
 
 1. The user sends a message in the chat interface.
 2. The WebLLM engine in the React code redacts people's or organizations' names. The original text never leaves the browser memory.
