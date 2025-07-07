@@ -14,6 +14,7 @@ interface UseWebLlmReturn {
   ready: boolean;
   text: string | null;
   analyzeComplexity: (prompt: string) => Promise<ComplexityAnalysis>;
+  engine: MLCEngine | null;
 }
 
 export const useWebLlm = (): UseWebLlmReturn => {
@@ -114,6 +115,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
     sendMessage,
     ready,
     text,
-    analyzeComplexity
+    analyzeComplexity,
+    engine
   };
 }; 

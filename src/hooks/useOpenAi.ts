@@ -8,7 +8,13 @@ interface UseOpenAiReturn {
   sendMessage: (
     message: string,
     currentMessages: Message[],
-    onUpdate: (text: string) => void
+    onUpdate: (text: string) => void,
+    privacyRedactFn?: (message: string, history: Array<{ role: string; content: string }>) => Promise<{
+      redactedMessage: string;
+      redactedMessages: Array<{ role: string; content: string }>;
+      macroMap: Map<string, string>;
+    }>,
+    privacyRestoreFn?: (text: string, macroMap?: Map<string, string>) => string
   ) => Promise<void>;
 }
 
@@ -18,7 +24,13 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
   const sendMessage = useCallback(async (
     message: string,
     currentMessages: Message[],
-    onUpdate: (text: string) => void
+    onUpdate: (text: string) => void,
+    privacyRedactFn?: (message: string, history: Array<{ role: string; content: string }>) => Promise<{
+      redactedMessage: string;
+      redactedMessages: Array<{ role: string; content: string }>;
+      macroMap: Map<string, string>;
+    }>,
+    privacyRestoreFn?: (text: string, macroMap?: Map<string, string>) => string
   ) => {
     const finalConfig = { ...MODEL.DEFAULT_CONFIG, ...config };
     
@@ -34,7 +46,40 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
       return Promise.reject(new Error('OpenAI API key not found. Please add it to your .env file.'));
     }
 
-    console.log('Sending message to OpenAI:', message);
+    // Prepare conversation history for OpenAI
+    const conversationHistory = currentMessages
+      .filter(msg => msg.source !== CHAT.MESSAGE_SOURCE.ANALYZING)
+      .map(msg => ({
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.text
+      }));
+
+    let messagesToSend = conversationHistory;
+    let messageToSend = message;
+    let macroMap: Map<string, string> | undefined;
+
+    // Apply privacy redaction if functions are provided
+    if (privacyRedactFn && privacyRestoreFn) {
+      try {
+        console.log('Applying privacy redaction before sending to OpenAI...');
+        const redactionResult = await privacyRedactFn(message, conversationHistory);
+        
+        messagesToSend = redactionResult.redactedMessages;
+        messageToSend = redactionResult.redactedMessage;
+        macroMap = redactionResult.macroMap;
+        
+        console.log('Privacy redaction applied:', {
+          originalMessage: message,
+          redactedMessage: messageToSend,
+          macroCount: macroMap.size
+        });
+      } catch (error) {
+        console.error('Privacy redaction failed, proceeding without redaction:', error);
+        // Continue without redaction if it fails
+      }
+    }
+
+    console.log('Sending message to OpenAI:', messageToSend);
 
     try {
       const response = await fetch(finalConfig.API_URL || MODEL.DEFAULT_CONFIG.API_URL, {
@@ -46,13 +91,8 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
         body: JSON.stringify({
           model: finalConfig.MODEL || MODEL.DEFAULT_CONFIG.MODEL,
           messages: [
-            ...currentMessages
-              .filter(msg => msg.source !== CHAT.MESSAGE_SOURCE.ANALYZING)
-              .map(msg => ({
-                role: msg.isUser ? 'user' : 'assistant',
-                content: msg.text
-              })),
-            { role: 'user', content: message }
+            ...messagesToSend,
+            { role: 'user', content: messageToSend }
           ],
           temperature: finalConfig.TEMPERATURE || MODEL.DEFAULT_CONFIG.TEMPERATURE,
           max_tokens: finalConfig.MAX_TOKENS || MODEL.DEFAULT_CONFIG.MAX_TOKENS,
@@ -86,7 +126,13 @@ export const useOpenAi = (config: OpenAIConfig): UseOpenAiReturn => {
                 const parsed = JSON.parse(data);
                 const content = parsed.choices[0]?.delta?.content || '';
                 streamedText += content;
-                onUpdate(streamedText);
+                
+                // Apply privacy restoration if function is provided
+                const displayText = privacyRestoreFn && macroMap 
+                  ? privacyRestoreFn(streamedText, macroMap)
+                  : streamedText;
+                
+                onUpdate(displayText);
               } catch (e) {
                 console.error('Error parsing streaming data:', e);
                 onUpdate('');
