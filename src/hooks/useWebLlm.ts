@@ -14,6 +14,7 @@ interface UseWebLlmReturn {
   ready: boolean;
   text: string | null;
   analyzeComplexity: (prompt: string) => Promise<ComplexityAnalysis>;
+  engine: MLCEngine | null;
 }
 
 export const useWebLlm = (): UseWebLlmReturn => {
@@ -70,7 +71,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
       const chatMessages = [
         { role: "system" as const, content: "You are a helpful AI assistant." },
         ...currentMessages
-          .filter(msg => msg.source !== 'Analyzing') // Filter out analyzing messages
+          .filter(msg => msg.source !== 'Analyzing')
           .map(msg => ({
             role: msg.isUser ? "user" as const : "assistant" as const,
             content: msg.text
@@ -114,6 +115,7 @@ export const useWebLlm = (): UseWebLlmReturn => {
     sendMessage,
     ready,
     text,
-    analyzeComplexity
+    analyzeComplexity,
+    engine
   };
 }; 

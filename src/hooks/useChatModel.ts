@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useWebLlm } from './useWebLlm';
 import { useOpenAi } from './useOpenAi';
+import { usePrivacyRedaction } from './usePrivacyRedaction';
 import { Message } from '../models/message';
 
 interface UseChatModelReturn {
@@ -14,6 +15,7 @@ interface UseChatModelReturn {
 export const useChatModel = (): UseChatModelReturn => {
   const webLlm = useWebLlm();
   const openAi = useOpenAi({ enabled: true });
+  const privacyRedaction = usePrivacyRedaction(webLlm.engine);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -90,15 +92,22 @@ export const useChatModel = (): UseChatModelReturn => {
 
       if (shouldUseOpenAI) {
         // Pass the current messages array to maintain conversation history
-        await openAi.sendMessage(cleanMessage, messages, (text: string) => {
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === aiMessageId 
-                ? { ...msg, text }
-                : msg
-            )
-          );
-        });
+        // Also pass privacy redaction functions for PII protection
+        await openAi.sendMessage(
+          cleanMessage, 
+          messages, 
+          (text: string) => {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === aiMessageId 
+                  ? { ...msg, text }
+                  : msg
+              )
+            );
+          },
+          privacyRedaction.redactForOpenAI,
+          privacyRedaction.restoreFromOpenAI
+        );
       } else {
         // Pass the current messages array to maintain conversation history
         await webLlm.sendMessage(cleanMessage, messages, (text: string) => {
