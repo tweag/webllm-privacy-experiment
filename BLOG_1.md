@@ -15,7 +15,7 @@ If you're curious how WebLLM works, here is a high-level overview:
 - To achieve high performance for the computationally intensive LLM workloads, WebLLM compiles performant WebGPU kernels by leveraging 2 other libraries under the hood.
 - WebGPU acts as an abstraction layer, allowing a single kernel to run efficiently across different GPUs (NVIDIA, AMD, Apple Metal) without needing separate implementations for each.
 - WebLLM compiles model weights and a WebAssembly (Wasm) library containing these WebGPU kernels ahead of time; these are then downloaded and cached by the browser.
-- The authors of the tool have measured that WebGPU kernels can maintain approximately 85% of native performance. You can read more about it here.
+- The authors of the tool have measured that WebGPU kernels can maintain approximately 85% of native performance. You can read more about it here. [Learn more here](https://blog.mlc.ai/2024/06/13/webllm-a-high-performance-in-browser-llm-inference-engine)
 
 ### Key Considerations:
 
