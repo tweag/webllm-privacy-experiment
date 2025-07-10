@@ -1,3 +1,5 @@
+
+
 # Running LLMs in the Browser – A Proof of Concept with WebLLM
 
 As AI continues to evolve, the demand for **fast, cost-effective, and privacy-conscious** applications is growing. Traditionally, large language models (LLMs) like ChatGPT run on powerful and expensive backend servers, requiring constant API calls for inference. However, **WebLLM** introduces a new paradigm: running LLMs **directly in the browser** using WebGPU, eliminating the need for cloud-based requests.
